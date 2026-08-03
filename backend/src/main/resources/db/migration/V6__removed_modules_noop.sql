@@ -1,0 +1,4 @@
+-- V6: Intentionally empty.
+-- This migration originally created tables for modules that have since been
+-- removed from the platform. The file is kept as a no-op so the Flyway
+-- version chain stays intact.

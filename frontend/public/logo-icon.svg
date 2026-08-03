@@ -1,0 +1,15 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- BuilderConnect building mark -->
+  <g>
+    <!-- Left tall building (dark navy) -->
+    <polygon points="148,72 148,460 196,460 196,72" fill="#0A0A0A"/>
+    <!-- Center wide building (dark navy) -->
+    <polygon points="196,140 196,460 340,460 340,180" fill="#0A0A0A"/>
+    <!-- Right angled structure (red) -->
+    <polygon points="260,42 340,180 340,460 372,460 372,180 292,42" fill="#F97316"/>
+    <!-- Left accent line (red) -->
+    <polygon points="116,180 148,180 148,460 116,460" fill="#F97316"/>
+    <!-- Top red triangle accent -->
+    <polygon points="196,72 260,42 196,140" fill="#F97316"/>
+  </g>
+</svg>

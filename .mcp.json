@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx.cmd",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "context7": {
+      "command": "npx.cmd",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "chrome-devtools": {
+      "command": "npx.cmd",
+      "args": ["-y", "@anthropic-ai/mcp-server-chrome-devtools@latest"]
+    },
+    "magic": {
+      "command": "npx.cmd",
+      "args": ["-y", "@21st-dev/magic@latest"],
+      "env": {
+        "API_KEY": "an_sk_d333b6bcbaa3f50736b1805ee2fe774112cbb2b7480c9dbac2bd254682f23ba3"
+      }
+    }
+  }
+}

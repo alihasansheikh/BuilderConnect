@@ -1,0 +1,4 @@
+-- V20: Intentionally empty.
+-- This migration originally added a column to a table belonging to a module
+-- that has since been removed from the platform. The file is kept as a no-op
+-- so the Flyway version chain stays intact.

@@ -1,0 +1,77 @@
+# Production Profile
+# ==================
+# Activate with: SPRING_PROFILES_ACTIVE=prod
+# All secrets MUST be provided via environment variables — no defaults.
+
+app:
+  cors:
+    # Comma-separated scalar — @Value in CorsConfig/WebSocketConfig cannot bind a YAML list.
+    allowed-origins: https://builderconnect.pk,https://www.builderconnect.pk
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - Authorization
+      - Content-Type
+      - Accept
+      - X-Requested-With
+    allow-credentials: true
+    max-age: 3600
+  upload:
+    dir: ./uploads
+    max-size: 10485760
+  frontend:
+    url: ${FRONTEND_URL:https://builderconnect.pk}
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  h2:
+    console:
+      enabled: false
+
+  flyway:
+    enabled: true
+    validate-on-migrate: true
+
+# Disable Swagger UI in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Production logging — INFO only, no SQL
+logging:
+  level:
+    root: WARN
+    com.builderconnect: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: OFF
+
+# Server hardening
+server:
+  tomcat:
+    connection-timeout: 20000

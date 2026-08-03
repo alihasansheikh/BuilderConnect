@@ -1,0 +1,71 @@
+# Development Profile - Uses H2 in-memory database
+# ================================================
+# NEVER deploy with this profile active in production.
+
+# Dev-only overrides for secrets (production requires env vars with no defaults)
+jwt:
+  secret: DevOnlySecretKeyForJWTSigningMustBeAtLeast256BitsLongForHS256DoNotUseInProduction
+  # Dev only: an 8-hour access token so frequent backend restarts (which wipe the
+  # in-memory H2 DB and its stored refresh tokens) don't log you out mid-session.
+  # Production keeps the secure 30-minute default from application.yml.
+  access-token-expiration: 28800000  # 8 hours
+
+# Application config (required by CorsConfig and other beans)
+app:
+  cors:
+    # Comma-separated scalar — @Value in CorsConfig/WebSocketConfig cannot bind a YAML list.
+    allowed-origins: http://localhost:3000,http://localhost:5173,http://localhost:5174
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - "*"
+    allow-credentials: true
+    max-age: 3600
+  upload:
+    dir: ./uploads
+    max-size: 10485760
+  frontend:
+    url: http://localhost:5173
+
+spring:
+  # H2 Database Configuration
+  datasource:
+    url: jdbc:h2:mem:builderconnect;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA / Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        format_sql: true
+
+  # H2 Console for development
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  # Disable Flyway for H2 (schema created by Hibernate)
+  flyway:
+    enabled: true
+
+# Logging - More verbose for development
+logging:
+  level:
+    root: INFO
+    com.builderconnect: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG

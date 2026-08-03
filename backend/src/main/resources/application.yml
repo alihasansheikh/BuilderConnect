@@ -1,0 +1,213 @@
+# BuilderConnect v2 - Application Configuration
+# =============================================
+
+spring:
+  application:
+    name: BuilderConnect
+
+  profiles:
+    active: dev
+
+  # Database Configuration
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/builderconnect?useSSL=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+
+  # JPA / Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          time_zone: UTC
+
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+  # Mail Configuration (Mock - replace with real SMTP for production)
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS:false}
+          ssl:
+            enable: ${MAIL_SSL:false}
+            trust: ${MAIL_HOST:localhost}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+    time-zone: UTC
+
+  # Servlet Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  max-http-request-header-size: 48KB
+  tomcat:
+    connection-timeout: 20000
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Pagination defaults
+spring.data.web.pageable:
+  max-page-size: 100
+  default-page-size: 20
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000  # 30 minutes in milliseconds
+  refresh-token-expiration: 604800000  # 7 days in milliseconds
+  issuer: BuilderConnect
+
+# Application-specific Configuration
+app:
+  name: BuilderConnect
+  version: 2.0.0
+
+  # CORS Configuration
+  # NOTE: allowed-origins MUST be a comma-separated scalar (not a YAML list) —
+  # CorsConfig/WebSocketConfig read it via @Value, which cannot bind a YAML list.
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - Authorization
+      - Content-Type
+      - Accept
+      - X-Requested-With
+    allow-credentials: true
+    max-age: 3600
+
+  # File Upload Configuration
+  upload:
+    dir: ./uploads
+    max-size: 10485760  # 10MB
+    allowed-extensions:
+      - jpg
+      - jpeg
+      - png
+      - gif
+      - pdf
+      - doc
+      - docx
+      - xls
+      - xlsx
+
+  # Rate Limiting
+  rate-limit:
+    auth-requests-per-minute: 10
+    general-requests-per-minute: 100
+    # Public FAQ chatbot: each request spends a metered (free-tier) Gemini call.
+    chatbot-requests-per-minute: 10
+
+  # Email Templates
+  email:
+    from: ${MAIL_FROM:noreply@builderconnect.pk}
+    support: support@builderconnect.pk
+
+  # Frontend URL (for email links)
+  frontend:
+    url: http://localhost:5173
+
+  # Stripe (TEST mode; live = key swap in backend/.env).
+  # Blank defaults keep dev bootable keyless — subscription checkout endpoints
+  # then return 400 "Stripe is not configured on this server".
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+  # AI provider selector for the FAQ chatbot, assistant, and floor-plan generation.
+  # gemini (free tier) or anthropic (paid). Blank/misconfigured key → the AI features
+  # report themselves unavailable and their UI auto-hides.
+  llm:
+    provider: ${LLM_PROVIDER:gemini}
+
+  # Gemini (used when app.llm.provider=gemini).
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-flash-latest}
+
+  # Anthropic / Claude (used when app.llm.provider=anthropic). Paid API — no free tier.
+  anthropic:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${ANTHROPIC_MODEL:claude-haiku-4-5-20251001}
+
+  # Google Maps Platform — server-side Places Autocomplete for the locality/area field.
+  # Blank key → locality suggestions disabled (the field still works as free text).
+  google-maps:
+    api-key: ${GOOGLE_MAPS_API_KEY:}
+
+# OpenAPI / Swagger Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  show-actuator: false
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.builderconnect: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/builderconnect.log

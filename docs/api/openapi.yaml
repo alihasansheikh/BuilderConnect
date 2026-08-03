@@ -1,0 +1,864 @@
+openapi: 3.0.3
+info:
+  title: BuilderConnect API
+  description: |
+    Smart Construction Marketplace & Project Lifecycle Management Platform API.
+
+    ## Authentication
+    All authenticated endpoints require a Bearer token in the Authorization header:
+    ```
+    Authorization: Bearer <access_token>
+    ```
+
+    ## Roles
+    - CLIENT: Project owners who post projects
+    - BUILDER: Construction professionals who bid on projects
+    - SUPPLIER: Material suppliers
+    - SUPERVISOR: On-site supervisors
+    - INSPECTOR: Quality inspectors
+    - SUPPORT_AGENT: Customer support
+    - ADMIN: Platform administrators
+    - SUPER_ADMIN: Full system access
+
+  version: 2.0.0
+  contact:
+    name: BuilderConnect Support
+    email: support@builderconnect.pk
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Projects
+    description: Project management
+  - name: Bids
+    description: Bid management
+  - name: Milestones
+    description: Milestone management
+  - name: Chat
+    description: Real-time messaging
+  - name: Notifications
+    description: In-app notifications
+  - name: Users
+    description: User management
+
+paths:
+  # ==================== AUTHENTICATION ====================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  # ==================== PROJECTS ====================
+  /client/projects:
+    get:
+      tags:
+        - Projects
+      summary: Get client's projects
+      operationId: getClientProjects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProjectStatus'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated list of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPage'
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateRequest'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+
+  /client/projects/{id}:
+    get:
+      tags:
+        - Projects
+      summary: Get project details
+      operationId: getClientProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+
+  /client/projects/{id}/publish:
+    post:
+      tags:
+        - Projects
+      summary: Publish a draft project
+      operationId: publishProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Project published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+
+  /client/projects/{projectId}/award/{bidId}:
+    post:
+      tags:
+        - Projects
+      summary: Award project to a bidder
+      operationId: awardProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Project awarded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: Search open projects (marketplace)
+      operationId: searchProjects
+      parameters:
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: minBudget
+          in: query
+          schema:
+            type: number
+        - name: maxBudget
+          in: query
+          schema:
+            type: number
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated list of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPage'
+
+  # ==================== BIDS ====================
+  /builder/bids:
+    get:
+      tags:
+        - Bids
+      summary: Get builder's bids
+      operationId: getBuilderBids
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BidStatus'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated list of bids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidPage'
+
+  /projects/{projectId}/bids:
+    get:
+      tags:
+        - Bids
+      summary: Get bids for a project
+      operationId: getProjectBids
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidPage'
+    post:
+      tags:
+        - Bids
+      summary: Submit a bid on a project
+      operationId: createBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidCreateRequest'
+      responses:
+        '201':
+          description: Bid submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResponse'
+
+  # ==================== CHAT ====================
+  /chat/rooms:
+    get:
+      tags:
+        - Chat
+      summary: Get user's chat rooms
+      operationId: getChatRooms
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of chat rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomPage'
+
+  /chat/rooms/direct/{userId}:
+    post:
+      tags:
+        - Chat
+      summary: Get or create direct chat room
+      operationId: getOrCreateDirectRoom
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Chat room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/rooms/{roomId}/messages:
+    get:
+      tags:
+        - Chat
+      summary: Get messages for a chat room
+      operationId: getRoomMessages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessagePage'
+    post:
+      tags:
+        - Chat
+      summary: Send a message
+      operationId: sendMessage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 0
+    size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        default: 10
+
+  schemas:
+    # Request schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    ProjectCreateRequest:
+      type: object
+      required:
+        - title
+        - description
+        - categoryId
+        - city
+        - budgetMin
+        - budgetMax
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+        city:
+          type: string
+        locationAddress:
+          type: string
+        budgetMin:
+          type: number
+        budgetMax:
+          type: number
+        deadline:
+          type: string
+          format: date
+        isUrgent:
+          type: boolean
+        requiresInspection:
+          type: boolean
+
+    BidCreateRequest:
+      type: object
+      required:
+        - amount
+        - proposal
+        - estimatedDuration
+      properties:
+        amount:
+          type: number
+        proposal:
+          type: string
+        estimatedDuration:
+          type: integer
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneInput'
+
+    MilestoneInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        dueDate:
+          type: string
+          format: date
+
+    ChatMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        messageType:
+          type: string
+          default: TEXT
+        attachments:
+          type: array
+          items:
+            type: string
+
+    # Response schemas
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        isActive:
+          type: boolean
+        isEmailVerified:
+          type: boolean
+        profilePhotoUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ProjectResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        projectNumber:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+        city:
+          type: string
+        locationAddress:
+          type: string
+        budgetMin:
+          type: number
+        budgetMax:
+          type: number
+        deadline:
+          type: string
+          format: date
+        status:
+          type: string
+        isUrgent:
+          type: boolean
+        requiresInspection:
+          type: boolean
+        bidCount:
+          type: integer
+        clientName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    BidResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        projectId:
+          type: integer
+          format: int64
+        projectTitle:
+          type: string
+        builderId:
+          type: integer
+          format: int64
+        builderName:
+          type: string
+        amount:
+          type: number
+        estimatedDuration:
+          type: integer
+        proposal:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatRoomResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        roomNumber:
+          type: string
+        roomType:
+          type: string
+        name:
+          type: string
+        lastMessage:
+          type: string
+        lastMessageAt:
+          type: string
+          format: date-time
+        unreadCount:
+          type: integer
+
+    ChatMessageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        roomId:
+          type: integer
+          format: int64
+        senderId:
+          type: integer
+          format: int64
+        senderName:
+          type: string
+        content:
+          type: string
+        messageType:
+          type: string
+        isEdited:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    # Enums
+    UserRole:
+      type: string
+      enum:
+        - CLIENT
+        - BUILDER
+        - SUPPLIER
+        - SUPERVISOR
+        - INSPECTOR
+        - SUPPORT_AGENT
+        - ADMIN
+        - SUPER_ADMIN
+
+    ProjectStatus:
+      type: string
+      enum:
+        - DRAFT
+        - OPEN
+        - BIDDING
+        - AWARDED
+        - IN_PROGRESS
+        - ON_HOLD
+        - COMPLETED
+        - CANCELLED
+        - DISPUTED
+
+    BidStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - UNDER_REVIEW
+        - SHORTLISTED
+        - ACCEPTED
+        - REJECTED
+        - WITHDRAWN
+        - EXPIRED
+
+    # Paginated responses
+    ProjectPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+        size:
+          type: integer
+
+    BidPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/BidResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+        size:
+          type: integer
+
+    ChatRoomPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatRoomResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    ChatMessagePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessageResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer

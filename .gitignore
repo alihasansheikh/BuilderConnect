@@ -1,0 +1,76 @@
+# === Backend (Java / Maven / Spring Boot) ===
+backend/target/
+backend/logs/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# Maven
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/mvnw
+backend/mvnw.cmd
+
+# Spring Boot
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-local.yml
+
+# H2 database files
+*.db
+*.mv.db
+*.trace.db
+
+# === Frontend (Node / React / Vite) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.local
+
+# === IDE / Editor ===
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === Environment / Secrets ===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# === Claude Code ===
+.claude/settings.local.json
+/node_modules
+/.claude
+/screenshots
+/docs/diagrams
+
+# Runtime upload store — files are written here by FileStorageService at runtime
+backend/uploads/
+
+# Browser-automation artifacts (screenshots, console logs, page snapshots)
+.playwright-mcp/
+
+# Local demo cheat-sheet of dev seed logins — regenerate from the V10 migration if needed
+demo-users-credentials.txt
+
+# FYP report bundle — kept locally, not published (orchestrator: git rm -r --cached docs/fyp-project-report)
+docs/fyp-project-report/
+
+# JVM crash logs
+hs_err_pid*.log
+docs/fyp-reports/
