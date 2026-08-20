@@ -39,6 +39,7 @@ The platform has six user roles: `CLIENT`, `BUILDER`, `SUPPLIER`, `SUPPORT_AGENT
 - Multi-role authentication with JWT
 - Real-time chat via WebSocket
 - Milestone direct payments (client pays with proof, builder confirms)
+- Stripe hosted Checkout for builder subscriptions, with signature-verified webhooks
 - Milestone-driven project lifecycle
 - Review and rating system
 - Comprehensive admin tools
@@ -87,8 +88,11 @@ The platform has six user roles: `CLIENT`, `BUILDER`, `SUPPLIER`, `SUPPORT_AGENT
 | Spring Security | 6.x | Authentication & Authorization |
 | Spring Data JPA | 3.x | Data Access Layer |
 | Hibernate | 6.x | ORM |
-| H2 Database | 2.x | In-Memory Database (MySQL compat mode) |
+| MySQL | connector 8.2.0 | Primary Database (`prod` profile) |
+| H2 Database | 2.x | In-Memory Database, `dev` profile (MySQL compat mode) |
 | Flyway | 9.x | Database Migration |
+| Stripe (stripe-java) | 26.5.1 | Builder Subscription Checkout & Webhooks |
+| Gemini / Anthropic | - | FAQ Chatbot, Assistant, Floor-Plan Generation |
 | JWT (jjwt) | 0.12.3 | Token Authentication |
 | WebSocket/STOMP | - | Real-time Communication |
 | SpringDoc OpenAPI | 2.3.0 | API Documentation |
@@ -157,7 +161,7 @@ The platform has six user roles: `CLIENT`, `BUILDER`, `SUPPLIER`, `SUPPORT_AGENT
 - **Maven 3.8** or higher
 - **Git**
 
-> **No external database required!** The project uses an H2 in-memory database that starts automatically with the backend. All tables are created via Flyway migrations and seed data is loaded on every startup.
+> **No external database required to evaluate locally.** The default `dev` profile runs an H2 in-memory database that starts automatically with the backend — tables are created via Flyway migrations and seed data is loaded on every startup, so the database resets on each restart. Production runs on **MySQL** under the `prod` profile.
 
 ### Backend Setup
 
@@ -361,22 +365,14 @@ Both development and tests use H2 in-memory database — no external database se
 
 ## Demo Credentials
 
-The seed data (loaded automatically on startup) includes test users for all roles. All passwords are **`password`** (the dev-only `DevDataLoader` re-encodes every account to this on each startup):
+The `dev` profile seeds accounts for every role — super admin, admin, support agent,
+client, builder and supplier — so you can sign in as any role without registering first.
 
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | alihasansheikh01@gmail.com | password |
-| Admin | admin@builderconnect.pk | password |
-| Support Agent | support@builderconnect.pk | password |
-| Client | client1@example.com | password |
-| Client | client2@example.com | password |
-| Client | client3@example.com | password |
-| Builder | builder1@example.com | password |
-| Builder | builder2@example.com | password |
-| Builder | builder3@example.com | password |
-| Builder | builder4@example.com | password |
-| Supplier | supplier1@example.com | password |
-| Supplier | supplier2@example.com | password |
+The seed addresses and the shared development password are defined in
+[`DevDataLoader.java`](backend/src/main/java/com/builderconnect/config/DevDataLoader.java)
+and are re-applied on every startup. They are not reproduced here: they exist only under
+the `dev` profile, are never loaded by `prod`, and are not valid against any deployed
+instance.
 
 ---
 
@@ -405,7 +401,7 @@ app.rate-limit.auth-requests-per-minute: 10      # login/register/forgot/reset (
 app.rate-limit.general-requests-per-minute: 100  # all other API paths (per IP)
 ```
 
-Local development needs no environment variables — the **dev profile** (active by default) supplies the H2 database and a dev-only JWT secret. Production requires `JWT_SECRET`, `DB_USERNAME`, `DB_PASSWORD`, and `SPRING_PROFILES_ACTIVE=prod` (see `backend/.env.example`).
+Local development needs no environment variables — the **dev profile** (active by default) supplies the H2 database and a dev-only JWT secret. Production requires `JWT_SECRET`, `DB_USERNAME`, `DB_PASSWORD`, and `SPRING_PROFILES_ACTIVE=prod` (see `backend/.env.example`). Stripe and the AI providers are optional: with their keys left blank the subscription checkout endpoints return `400 Stripe is not configured on this server` and the AI features report themselves unavailable, so the rest of the application still runs.
 
 ---
 
